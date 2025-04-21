@@ -9,9 +9,10 @@ import SwiftUI
 
 struct OrganizerDetailView: View {
     let organizer: Organizer
-    @ObservedObject var navigationViewModel: NavigationViewModel
     
     @State private var showFullDescription = false
+    @State private var selectedImage: WrappedImage? = nil
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 8) {
@@ -32,6 +33,13 @@ struct OrganizerDetailView: View {
                             HStack {
                                 Image(systemName: "globe")
                                 Text(organizer.websiteURL ?? "N/A")
+                            }
+                            .foregroundStyle(.blue)
+                            .underline()
+                            .onTapGesture {
+                                if let urlString = URL(string: "https://" + (organizer.websiteURL ?? "")) {
+                                    UIApplication.shared.open(urlString)
+                                }
                             }
                         }
                     }
@@ -75,16 +83,14 @@ struct OrganizerDetailView: View {
                     ScrollView(.horizontal) {
                         LazyHStack {
                             ForEach(organizer.events) { event in
-                                Button {
-                                    navigationViewModel.navigateToEvent(event)
-                                } label: {
-                                    if let url = event.pamphletURL, !url.isEmpty {
-                                        Image(url)
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 162, height: 162)
-                                            .clipShape(Rectangle())
-                                    }
+                                NavigationLink(value: event) {
+                                        if let url = event.pamphletURL, !url.isEmpty {
+                                            Image(url)
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 162, height: 162)
+                                                .clipShape(Rectangle())
+                                        }
                                 }
                             }
                         }
@@ -96,19 +102,23 @@ struct OrganizerDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Past Events Documentation")
                         .font(.title2)
-                    
                     ScrollView(.horizontal) {
-                        if organizer.pastEventPhotoURLs.isEmpty {
-                            Text("No past event documentation")
-                        } else {
-                            LazyHStack {
-                                ForEach(organizer.pastEventPhotoURLs, id: \.self) { url in
-                                    Image(url)
+                        LazyHStack(spacing: 8) {
+                            ForEach(organizer.pastEventPhotoURLs, id: \.self) { url in
+                                if let uiImage = UIImage(named: url) {
+                                    Image(uiImage: uiImage)
                                         .resizable()
                                         .scaledToFill()
                                         .frame(width: 162, height: 162)
                                         .clipShape(Rectangle())
+                                        .onTapGesture {
+                                            selectedImage = WrappedImage(image: uiImage)
+                                        }
+                                } else {
+                                    Color.gray
+                                        .frame(width: 162, height: 162)
                                 }
+                                
                             }
                         }
                     }
@@ -118,9 +128,28 @@ struct OrganizerDetailView: View {
         }
         .navigationTitle("Organizer Detail")
         .navigationBarTitleDisplayMode(.inline)
-        .onDisappear {
-            if navigationViewModel.path.count > 0 {
-                navigationViewModel.popPath()
+        .fullScreenCover(item: $selectedImage) { item in
+            
+            ZStack(alignment: .topTrailing) {
+                Color.black
+                    .ignoresSafeArea()
+                
+                Image(uiImage: item.image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black)
+                
+                
+                Button(action: {
+                    selectedImage = nil
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.white)
+                        .padding()
+                }
+                
             }
         }
     }
@@ -200,5 +229,5 @@ struct OrganizerDetailView: View {
     
     let navigationViewModel = NavigationViewModel()
     
-    return OrganizerDetailView(organizer: organizer, navigationViewModel: navigationViewModel)
+    return OrganizerDetailView(organizer: organizer)
 }

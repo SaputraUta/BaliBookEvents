@@ -9,11 +9,9 @@ import SwiftUI
 import SwiftData
 
 struct EventListView: View {
-    @ObservedObject var navigationViewModel: NavigationViewModel
     var events : [Event]
     
-    init(navigationViewModel: NavigationViewModel, events: [Event]) {
-        self.navigationViewModel = navigationViewModel
+    init(events: [Event]) {
         self.events = events
     }
     
@@ -21,17 +19,18 @@ struct EventListView: View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(events, id: \.id) { event in
-                    Button {
-                        navigationViewModel.navigateToEvent(event)
-                    } label : {
+                    NavigationLink(value: event) {
                         EventCardView(event: event)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
             .padding()
         }
         .navigationTitle("Event List")
+        .navigationDestination(for: Event.self) { event in
+            DetailEventView(event: event)
+        }
         .padding(.top, -12)
     }
 }
@@ -120,7 +119,7 @@ struct EventListView: View {
     
     let navigationViewModel = NavigationViewModel()
     
-    return EventListView(navigationViewModel: navigationViewModel, events: events)
+    return EventListView(events: events)
         .modelContainer(container)
 }
 

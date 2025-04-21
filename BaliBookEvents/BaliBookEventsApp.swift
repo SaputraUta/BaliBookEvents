@@ -16,6 +16,8 @@ struct BaliBookEventsApp: App {
             do {
                 container = try ModelContainer(for: Event.self, Organizer.self)
                 
+                UserDefaults.standard.removeObject(forKey: "hasPreloadedData")
+                
                 if !UserDefaults.standard.bool(forKey: "hasPreloadedData") {
                     populateSampleData()
                     UserDefaults.standard.set(true, forKey: "hasPreloadedData")
@@ -38,7 +40,7 @@ struct BaliBookEventsApp: App {
             id: UUID(),
             name: "Yayasan Mudra Swari",
             contactPerson: "+62 123 456 7890",
-            websiteURL: "www.mudraswari.org",
+            websiteURL: "mudraswari.org",
             desc: "Yayasan Mudra Swari Saraswati is dedicated to fostering cultural enrichment and educational opportunities in Bali. We organize a variety of events, from literary and artistic workshops to cultural festivals, all aimed at inspiring our community and supporting local talent.",
             jargon: "Organizing cultural and educational events in Ubud, Bali.",
             pastEventPhotoURLs: ["image1", "image4", "image5"]
@@ -48,7 +50,7 @@ struct BaliBookEventsApp: App {
             id: UUID(),
             name: "Bali Spirit Festival",
             contactPerson: "+62 877 6420 7333",
-            websiteURL: "www.balispiritfestival.com",
+            websiteURL: "balispiritfestival.com",
             desc: "The BaliSpirit Festival is a global celebration of yoga, dance, and music that brings together top international teachers, musicians, and dancers for a week of inspiration and discovery.",
             jargon: "Celebrating yoga, dance, and global wellness in the heart of Ubud.",
             pastEventPhotoURLs: ["image2", "image3", "image6"]
@@ -58,7 +60,7 @@ struct BaliBookEventsApp: App {
             id: UUID(),
             name: "Kulkul Farm & Events",
             contactPerson: "+62 812 3855 1234",
-            websiteURL: "www.kulkulfarm.com",
+            websiteURL: "kulkulfarm.com",
             desc: "Kulkul is an organic farm and vibrant event space nestled in the rice fields of Tegallalang. We host farm-to-table dining experiences, workshops on sustainable living, and regular community markets featuring local artisans.",
             jargon: "Promoting sustainable living through immersive farm experiences and community events.",
             pastEventPhotoURLs: ["image7", "image1", "image4"]
@@ -68,13 +70,12 @@ struct BaliBookEventsApp: App {
             id: UUID(),
             name: "Omni Bali",
             contactPerson: "+62 819 3366 8877",
-            websiteURL: "www.omnibali.co",
+            websiteURL: "omnibali.co",
             desc: "Omni Bali creates cutting-edge tech conferences and networking events for digital nomads and the Bali startup ecosystem. Our mission is to foster innovation and collaboration among tech professionals in paradise.",
             jargon: "Connecting Bali's digital ecosystem through forward-thinking events.",
             pastEventPhotoURLs: ["image5", "image2", "image6"]
         )
         
-        // MUDRA SWARI EVENTS
         let event1 = Event(
             id: UUID(),
             title: "Ubud Writers & Readers Festival 2024",

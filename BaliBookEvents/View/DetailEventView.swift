@@ -10,11 +10,9 @@ import SwiftUI
 
 struct DetailEventView: View {
     let event: Event
-    @ObservedObject var navigationViewModel: NavigationViewModel
     
     @State private var isShowingFullDescription = false
-    @State private var selectedImage: UIImage? = nil
-    @State private var isImageViewerPresented = false
+    @State private var selectedImage: WrappedImage? = nil
     
     var shouldShowSeeMore: Bool {
         return event.desc.count > 120
@@ -36,11 +34,7 @@ struct DetailEventView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(event.title)
                         .font(.title2.bold())
-                    Button {
-                        if let organizer = event.organizer {
-                            navigationViewModel.navigateToOrganizer(organizer)
-                        }
-                    } label: {
+                    NavigationLink(value: event.organizer) {
                         HStack(spacing: 2) {
                             Image(systemName: "person.fill")
                             Text(event.organizer?.name ?? "Unknown")
@@ -80,6 +74,13 @@ struct DetailEventView: View {
                             HStack {
                                 Image(systemName: "mappin")
                                 Text(event.locationName)
+                            }
+                            .foregroundStyle(.blue)
+                            .underline()
+                            .onTapGesture {
+                                if let url = URL(string: "http://maps.apple.com/?ll=\(event.latitude),\(event.longtitude)") {
+                                    UIApplication.shared.open(url)
+                                }
                             }
                             HStack {
                                 Image(systemName: "phone")
@@ -134,8 +135,7 @@ struct DetailEventView: View {
                                             .frame(width: 162, height: 162)
                                             .clipShape(Rectangle())
                                             .onTapGesture {
-                                                selectedImage = uiImage
-                                                isImageViewerPresented = true
+                                                selectedImage = WrappedImage(image: uiImage)
                                             }
                                     } else {
                                         Color.gray
@@ -148,37 +148,35 @@ struct DetailEventView: View {
                 }
                 .padding(.horizontal)
             }
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .fullScreenCover(isPresented: $isImageViewerPresented) {
-            ZStack(alignment: .topTrailing) {
-                Color.black
-                    .ignoresSafeArea()
+            .scrollBounceBehavior(.basedOnSize)
+            .fullScreenCover(item: $selectedImage) { item in
                 
-                if let image = selectedImage {
-                    Image(uiImage: image)
+                ZStack(alignment: .topTrailing) {
+                    Color.black
+                        .ignoresSafeArea()
+                    
+                    Image(uiImage: item.image)
                         .resizable()
                         .scaledToFit()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Color.black)
-                }
-                
-                Button(action: {
-                    isImageViewerPresented = false
-                    selectedImage = nil
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(.white)
-                        .padding()
+                    
+                    
+                    Button(action: {
+                        selectedImage = nil
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.white)
+                            .padding()
+                    }
+                    
                 }
             }
-        }
-        .navigationTitle("Event Detail")
-        .navigationBarTitleDisplayMode(.inline)
-        .onDisappear {
-            if navigationViewModel.path.count > 0 {
-                navigationViewModel.popPath()
+            .navigationTitle("Event Detail")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(for: Organizer.self) { organizer in
+                OrganizerDetailView(organizer: organizer)
             }
         }
     }
@@ -212,5 +210,5 @@ struct DetailEventView: View {
     
     let navigationViewModel = NavigationViewModel()
     
-    DetailEventView(event: event1, navigationViewModel: navigationViewModel)
+    DetailEventView(event: event1)
 }

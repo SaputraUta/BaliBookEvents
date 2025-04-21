@@ -8,8 +8,8 @@
 import SwiftData
 import SwiftUI
 
+
 struct ContentView: View {
-    @StateObject private var navigationViewModel = NavigationViewModel()
     @Environment(\.modelContext) private var modelContext
     
     let buttonArray = ["All", "This Weekend", "Nearest", "Free"]
@@ -43,7 +43,7 @@ struct ContentView: View {
     }
     
     var body: some View {
-        NavigationStack(path: $navigationViewModel.path) {
+        NavigationStack {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 18) {
                     ForEach(buttonArray, id: \.self) { text in
@@ -51,22 +51,11 @@ struct ContentView: View {
                     }
                 }
                 .padding(.horizontal)
+                .padding(.bottom, 4)
             }
-            EventListView(navigationViewModel: navigationViewModel, events: filteredEvents)
-                .navigationDestination(for: Event.self) { event in
-                    DetailEventView(event: event, navigationViewModel : navigationViewModel)
-                }
-                .navigationDestination(for: Organizer.self) { organizer in
-                    OrganizerDetailView(organizer: organizer, navigationViewModel: navigationViewModel)
-                }
+            EventListView(events: filteredEvents)
         }
         .searchable(text: $searchText, prompt: "Search event")
-        .onAppear {
-            navigationViewModel.loadSavedPath(context: modelContext)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
-            navigationViewModel.saveCurrentPath()
-        }
     }
 }
 
