@@ -11,6 +11,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @StateObject private var locationManager = LocationManager()
     
     let buttonArray = ["All", "This Weekend", "Nearest", "Free"]
     @State private var searchText = ""
@@ -18,17 +19,30 @@ struct ContentView: View {
     @State private var selectedFilter = "All"
     
     var filteredEvents : [Event] {
-        events.filter { event in
-            let matchesSearch = searchText.isEmpty || event.title.localizedCaseInsensitiveContains(searchText)
+        let matchesSearch: (Event) -> Bool = { event in
+            searchText.isEmpty || event.title.localizedCaseInsensitiveContains(searchText)
+        }
+        
+        switch selectedFilter {
             
-            switch selectedFilter {
-            case "Free":
-                return matchesSearch && event.entryFee == 0
-            case "This Weekend":
-                return matchesSearch && isThisWeekend(event.date)
-            default:
-                return matchesSearch
-            }
+        case "Free":
+            return events.filter { matchesSearch($0) && $0.entryFee == 0 }
+            
+        case "This Weekend":
+            return events.filter { matchesSearch($0) && isThisWeekend( $0.date) }
+            
+        case "Nearest":
+            guard let userCoord = locationManager.lastKnownLocation else { return [] }
+            return events
+                .filter {
+                    matchesSearch($0)
+                }
+                .sorted {
+                    $0.distance(from: userCoord) < $1.distance(from: userCoord)
+                }
+            
+        default:
+            return events.filter(matchesSearch)
         }
     }
     
@@ -44,18 +58,22 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView(.horizontal, showsIndicators: false) {
+            VStack {
                 HStack(spacing: 18) {
                     ForEach(buttonArray, id: \.self) { text in
                         FilterButton(text: text, selectedFilter: $selectedFilter)
+                            .sensoryFeedback(.selection, trigger: selectedFilter)
                     }
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 4)
+                .padding(.bottom, 8)
+                EventListView(events: filteredEvents, locationManager: locationManager)
             }
-            EventListView(events: filteredEvents)
+            .searchable(text: $searchText, prompt: "Search event")
         }
-        .searchable(text: $searchText, prompt: "Search event")
+        .onAppear {
+            locationManager.checkLocationAuthorization()
+        }
     }
 }
 
@@ -64,14 +82,14 @@ struct ContentView: View {
     let container = try! ModelContainer(for: Event.self, Organizer.self, configurations: config)
     
     let organizer = Organizer(
-            id: UUID(),
-            name: "Yayasan Mudra Swari",
-            contactPerson: "+62 123 456 7890",
-            websiteURL: "www.mudraswari.org",
-            desc: "Yayasan Mudra Swari Saraswati is dedicated to fostering cultural enrichment and educational opportunities in Bali. We organize a variety of events, from literary and artistic workshops to cultural festivals, all aimed at inspiring our community and supporting local talent.",
-            jargon: "Organizing cultural and educational events in Ubud, Bali.",
-            pastEventPhotoURLs: ["image1", "image4", "image5"]
-        )
+        id: UUID(),
+        name: "Yayasan Mudra Swari",
+        contactPerson: "+62 123 456 7890",
+        websiteURL: "www.mudraswari.org",
+        desc: "Yayasan Mudra Swari Saraswati is dedicated to fostering cultural enrichment and educational opportunities in Bali. We organize a variety of events, from literary and artistic workshops to cultural festivals, all aimed at inspiring our community and supporting local talent.",
+        jargon: "Organizing cultural and educational events in Ubud, Bali.",
+        pastEventPhotoURLs: ["image1", "image4", "image5"]
+    )
     
     let event1 = Event(
         id: UUID(),

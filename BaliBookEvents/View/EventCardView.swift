@@ -28,7 +28,7 @@ struct EventCardView: View {
             
             VStack(alignment: .leading) {
                 Text(event.title)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(alignment: .leading)
                     .font(.subheadline)
                     .bold()
                     .lineLimit(1)
@@ -97,7 +97,7 @@ struct EventCardView: View {
         }
         .padding(.horizontal, 5)
         .padding(.vertical, 10)
-        .frame(width: .infinity, height: 160)
+        .frame(maxWidth: .infinity, maxHeight: 160)
         .background(.white)
         .clipShape(.rect(cornerRadius: 10))
         .shadow(radius: 2)

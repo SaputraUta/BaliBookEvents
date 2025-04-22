@@ -13,10 +13,13 @@ struct DetailEventView: View {
     
     @State private var isShowingFullDescription = false
     @State private var selectedImage: WrappedImage? = nil
+    @ObservedObject var locationManager: LocationManager
+    @State private var lastDragValue: CGFloat = 0
     
     var shouldShowSeeMore: Bool {
         return event.desc.count > 120
     }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading ,spacing: 8){
@@ -44,6 +47,7 @@ struct DetailEventView: View {
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(.blue)
+                    
                     Divider()
                         .padding(.top, 12)
                 }
@@ -69,7 +73,15 @@ struct DetailEventView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Image(systemName: "location")
-                                Text("54 km")
+                                if let userCoord = locationManager.lastKnownLocation {
+                                    let distanceInMeters = event.distance(from: userCoord)
+                                    let formatted = distanceInMeters > 1000 ?
+                                    String(format: "%.1f km", distanceInMeters / 1000)
+                                    : String(format: ".0f km", distanceInMeters)
+                                    Text(formatted)
+                                } else {
+                                    Text("Location unknown")
+                                }
                             }
                             HStack {
                                 Image(systemName: "mappin")
@@ -80,6 +92,10 @@ struct DetailEventView: View {
                             .onTapGesture {
                                 if let url = URL(string: "http://maps.apple.com/?ll=\(event.latitude),\(event.longtitude)") {
                                     UIApplication.shared.open(url)
+                                    let generator = UISelectionFeedbackGenerator()
+                                    
+                                    generator.prepare()
+                                    generator.selectionChanged()
                                 }
                             }
                             HStack {
@@ -107,6 +123,7 @@ struct DetailEventView: View {
                                         .fontWeight(.semibold)
                                         .foregroundStyle(.blue)
                                 }
+                                .sensoryFeedback(.selection, trigger: isShowingFullDescription)
                                 Spacer()
                             }
                         }
@@ -136,6 +153,10 @@ struct DetailEventView: View {
                                             .clipShape(Rectangle())
                                             .onTapGesture {
                                                 selectedImage = WrappedImage(image: uiImage)
+                                                let generator = UISelectionFeedbackGenerator()
+                                                
+                                                generator.prepare()
+                                                generator.selectionChanged()
                                             }
                                     } else {
                                         Color.gray
@@ -149,29 +170,11 @@ struct DetailEventView: View {
                 .padding(.horizontal)
             }
             .scrollBounceBehavior(.basedOnSize)
-            .fullScreenCover(item: $selectedImage) { item in
-                
-                ZStack(alignment: .topTrailing) {
-                    Color.black
-                        .ignoresSafeArea()
-                    
+            .sheet(item: $selectedImage) { item in
                     Image(uiImage: item.image)
                         .resizable()
                         .scaledToFit()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black)
-                    
-                    
-                    Button(action: {
-                        selectedImage = nil
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 32))
-                            .foregroundColor(.white)
-                            .padding()
-                    }
-                    
-                }
             }
             .navigationTitle("Event Detail")
             .navigationBarTitleDisplayMode(.inline)
@@ -208,7 +211,5 @@ struct DetailEventView: View {
         desc: "The Ubud Writers & Readers Festival 2024 is a five-day celebration of literature, culture, and ideas, bringing together renowned authors, poets, and thinkers from around the world. Held in the heart of Ubud, the festival."
     )
     
-    let navigationViewModel = NavigationViewModel()
-    
-    DetailEventView(event: event1)
+    DetailEventView(event: event1, locationManager: LocationManager())
 }

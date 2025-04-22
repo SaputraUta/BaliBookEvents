@@ -10,9 +10,11 @@ import SwiftData
 
 struct EventListView: View {
     var events : [Event]
+    @ObservedObject var locationManager: LocationManager
     
-    init(events: [Event]) {
+    init(events: [Event], locationManager: LocationManager) {
         self.events = events
+        self.locationManager = locationManager
     }
     
     var body: some View {
@@ -29,7 +31,7 @@ struct EventListView: View {
         }
         .navigationTitle("Event List")
         .navigationDestination(for: Event.self) { event in
-            DetailEventView(event: event)
+            DetailEventView(event: event, locationManager: locationManager)
         }
         .padding(.top, -12)
     }
@@ -117,9 +119,7 @@ struct EventListView: View {
     container.mainContext.insert(event3)
     container.mainContext.insert(event4)
     
-    let navigationViewModel = NavigationViewModel()
-    
-    return EventListView(events: events)
+    return EventListView(events: events, locationManager: LocationManager())
         .modelContainer(container)
 }
 

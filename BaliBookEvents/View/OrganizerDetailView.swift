@@ -39,6 +39,10 @@ struct OrganizerDetailView: View {
                             .onTapGesture {
                                 if let urlString = URL(string: "https://" + (organizer.websiteURL ?? "")) {
                                     UIApplication.shared.open(urlString)
+                                    let generator = UISelectionFeedbackGenerator()
+                                    
+                                    generator.prepare()
+                                    generator.selectionChanged()
                                 }
                             }
                         }
@@ -59,16 +63,18 @@ struct OrganizerDetailView: View {
                     
                     HStack {
                         Spacer()
-                        Button {
+                        Button(action: {
                             withAnimation {
                                 showFullDescription.toggle()
                             }
-                        } label: {
+                        }){
                             Text(showFullDescription ? "Show Less" : "Show More")
                                 .font(.footnote)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(Color.blue)
                         }
+                        .sensoryFeedback(.selection, trigger: showFullDescription)
+                        
                         Spacer()
                     }
                 }
@@ -84,13 +90,13 @@ struct OrganizerDetailView: View {
                         LazyHStack {
                             ForEach(organizer.events) { event in
                                 NavigationLink(value: event) {
-                                        if let url = event.pamphletURL, !url.isEmpty {
-                                            Image(url)
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(width: 162, height: 162)
-                                                .clipShape(Rectangle())
-                                        }
+                                    if let url = event.pamphletURL, !url.isEmpty {
+                                        Image(url)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 162, height: 162)
+                                            .clipShape(Rectangle())
+                                    }
                                 }
                             }
                         }
@@ -113,6 +119,10 @@ struct OrganizerDetailView: View {
                                         .clipShape(Rectangle())
                                         .onTapGesture {
                                             selectedImage = WrappedImage(image: uiImage)
+                                            let generator = UISelectionFeedbackGenerator()
+                                            
+                                            generator.prepare()
+                                            generator.selectionChanged()
                                         }
                                 } else {
                                     Color.gray
@@ -128,29 +138,11 @@ struct OrganizerDetailView: View {
         }
         .navigationTitle("Organizer Detail")
         .navigationBarTitleDisplayMode(.inline)
-        .fullScreenCover(item: $selectedImage) { item in
-            
-            ZStack(alignment: .topTrailing) {
-                Color.black
-                    .ignoresSafeArea()
-                
-                Image(uiImage: item.image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black)
-                
-                
-                Button(action: {
-                    selectedImage = nil
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(.white)
-                        .padding()
-                }
-                
-            }
+        .sheet(item: $selectedImage) { item in
+            Image(uiImage: item.image)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
@@ -226,8 +218,6 @@ struct OrganizerDetailView: View {
     ]
     
     organizer.events = sampleEvents
-    
-    let navigationViewModel = NavigationViewModel()
     
     return OrganizerDetailView(organizer: organizer)
 }

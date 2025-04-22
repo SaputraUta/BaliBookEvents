@@ -16,8 +16,6 @@ struct BaliBookEventsApp: App {
             do {
                 container = try ModelContainer(for: Event.self, Organizer.self)
                 
-                UserDefaults.standard.removeObject(forKey: "hasPreloadedData")
-                
                 if !UserDefaults.standard.bool(forKey: "hasPreloadedData") {
                     populateSampleData()
                     UserDefaults.standard.set(true, forKey: "hasPreloadedData")
@@ -26,6 +24,7 @@ struct BaliBookEventsApp: App {
                 fatalError("Failed to create ModelContainer: \(error)")
             }
         }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
